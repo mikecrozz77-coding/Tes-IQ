@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tes IQ - 20 Soal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      line-height: 1.6;
+      padding: 1rem;
+    }
+    .container {
+      max-width: 620px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+    .quiz-container { padding: 1.25rem 1.5rem 1.75rem; }
+    .progress {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #4f46e5;
+      width: 0%;
+      transition: width 0.35s ease;
+    }
+    .question {
+      font-size: 1.08rem;
+      margin-bottom: 1.1rem;
+      font-weight: 600;
+    }
+    .options { display: flex; flex-direction: column; gap: 0.7rem; }
+    .option {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.95rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1rem;
+    }
+    .option:hover { border-color: #4f46e5; background: #eef2ff; }
+    .option.selected { border-color: #4f46e5; background: #e0e7ff; }
+    .option.correct { border-color: #10b981; background: #d1fae5; }
+    .option.wrong { border-color: #ef4444; background: #fee2e2; }
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.4rem;
+      padding: 0.95rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .result {
+      text-align: center;
+      padding: 2rem 1rem 1.5rem;
+    }
+    .score {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #4f46e5;
+      margin: 0.8rem 0;
+    }
+    .hidden { display: none; }
+    .q-count { font-size: 0.85rem; opacity: 0.85; margin-bottom: 0.4rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Tes IQ</h1>
+      <p>20 Soal Logika & Pengetahuan</p>
+    </header>
+
+    <div class="quiz-container">
+      <div class="progress"><div class="progress-bar" id="progress"></div></div>
+      
+      <div id="quiz">
+        <div class="q-count" id="qCount"></div>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <button class="btn" id="nextBtn" disabled>Lanjut</button>
+      </div>
+
+      <div class="result hidden" id="result">
+        <h2>Hasil Tes</h2>
+        <div class="score" id="score"></div>
+        <p id="message" style="margin-bottom: 1.2rem;"></p>
+        <button class="btn" onclick="restart()">Coba Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "Apa yang berikutnya dalam pola: 2, 4, 8, 16, ...?", options: ["24", "32", "30", "20"], answer: 1 },
+      { q: "Jika semua kucing adalah hewan, dan semua hewan bernapas, maka...", options: ["Semua kucing bernapas", "Semua yang bernapas adalah kucing", "Beberapa kucing tidak bernapas", "Tidak ada yang benar"], answer: 0 },
+      { q: "Manakah yang berbeda?", options: ["Apel", "Pisang", "Wortel", "Jeruk"], answer: 2 },
+      { q: "Berapa hasil dari 15 + 27 − 8?", options: ["34", "32", "36", "30"], answer: 0 },
+      { q: "Jika hari ini Senin, maka 3 hari lagi adalah hari...", options: ["Kamis", "Rabu", "Jumat", "Selasa"], answer: 0 },
+      { q: "Apa antonim dari kata 'besar'?", options: ["Panjang", "Kecil", "Lebar", "Tinggi"], answer: 1 },
+      { q: "Pola: ▲ ● ▲ ● ▲ ... Apa selanjutnya?", options: ["●", "▲", "■", "◆"], answer: 0 },
+      { q: "Sebuah buku harganya Rp 50.000. Diskon 20%. Berapa harga setelah diskon?", options: ["Rp 40.000", "Rp 45.000", "Rp 30.000", "Rp 42.000"], answer: 0 },
+      { q: "Berapa jumlah sudut pada segitiga?", options: ["90°", "180°", "360°", "270°"], answer: 1 },
+      { q: "Apa yang berikutnya: 5, 10, 15, 20, ...?", options: ["25", "22", "30", "24"], answer: 0 },
+      { q: "Jika 3 apel harganya Rp 15.000, berapa harga 5 apel?", options: ["Rp 20.000", "Rp 25.000", "Rp 22.000", "Rp 30.000"], answer: 1 },
+      { q: "Manakah yang merupakan bilangan genap?", options: ["13", "27", "18", "9"], answer: 2 },
+      { q: "Sinonim dari 'pintar' adalah...", options: ["Bodoh", "Cerdas", "Lambat", "Malas"], answer: 1 },
+      { q: "Pola angka: 1, 3, 5, 7, ... Apa selanjutnya?", options: ["9", "8", "10", "11"], answer: 0 },
+      { q: "Jika A lebih tinggi dari B, dan B lebih tinggi dari C, maka...", options: ["A lebih tinggi dari C", "C lebih tinggi dari A", "A sama dengan C", "Tidak bisa ditentukan"], answer: 0 },
+      { q: "Berapa hasil 6 × 7?", options: ["42", "36", "48", "40"], answer: 0 },
+      { q: "Apa kebalikan dari kata 'panas'?", options: ["Dingin", "Hangat", "Sejuk", "Lembab"], answer: 0 },
+      { q: "Dalam satu jam ada berapa menit?", options: ["50", "60", "70", "100"], answer: 1 },
+      { q: "Pola: 10, 20, 30, 40, ... Apa selanjutnya?", options: ["45", "50", "55", "60"], answer: 1 },
+      { q: "Jika 1 lusin = 12, maka 2 lusin = ...", options: ["20", "24", "18", "22"], answer: 1 }
+    ];
+
+    let current = 0;
+    let score = 0;
+    let selected = null;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const nextBtn = document.getElementById("nextBtn");
+    const progressEl = document.getElementById("progress");
+    const quizEl = document.getElementById("quiz");
+    const resultEl = document.getElementById("result");
+    const scoreEl = document.getElementById("score");
+    const messageEl = document.getElementById("message");
+    const qCountEl = document.getElementById("qCount");
+
+    function loadQuestion() {
+      selected = null;
+      nextBtn.disabled = true;
+      const q = questions[current];
+      qCountEl.textContent = `Soal ${current + 1} dari ${questions.length}`;
+      questionEl.textContent = q.q;
+      optionsEl.innerHTML = "";
+      q.options.forEach((opt, i) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.textContent = opt;
+        div.onclick = () => selectOption(div, i);
+        optionsEl.appendChild(div);
+      });
+      progressEl.style.width = `${(current / questions.length) * 100}%`;
+    }
+
+    function selectOption(el, index) {
+      if (selected !== null) return;
+      selected = index;
+      document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+      el.classList.add("selected");
+      nextBtn.disabled = false;
+    }
+
+    function nextQuestion() {
+      if (selected === null) return;
+      const q = questions[current];
+      const options = document.querySelectorAll(".option");
+      options[q.answer].classList.add("correct");
+      if (selected !== q.answer) {
+        options[selected].classList.add("wrong");
+      } else {
+        score++;
+      }
+      current++;
+      setTimeout(() => {
+        if (current < questions.length) {
+          loadQuestion();
+        } else {
+          showResult();
+        }
+      }, 700);
+    }
+
+    function showResult() {
+      quizEl.classList.add("hidden");
+      resultEl.classList.remove("hidden");
+      const percent = Math.round((score / questions.length) * 100);
+      scoreEl.textContent = `${score} / ${questions.length}`;
+      let msg = "";
+      if (percent >= 90) msg = "Luar biasa! Skor sangat tinggi!";
+      else if (percent >= 75) msg = "Bagus sekali! Hasil yang baik.";
+      else if (percent >= 60) msg = "Cukup baik. Terus berlatih!";
+      else if (percent >= 40) msg = "Masih bisa lebih baik. Coba lagi!";
+      else msg = "Jangan menyerah, belajar lebih giat ya!";
+      messageEl.textContent = msg;
+      progressEl.style.width = "100%";
+    }
+
+    function restart() {
+      current = 0;
+      score = 0;
+      quizEl.classList.remove("hidden");
+      resultEl.classList.add("hidden");
+      loadQuestion();
+    }
+
+    nextBtn.onclick = nextQuestion;
+    loadQuestion();
+  </script>
+</body>
+</html>
