@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes IQ Sederhana</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #1a73e8;
+            text-align: center;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #1a73e8;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background-color: #f8f9fa;
+            border: 2px solid #dadce0;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover {
+            background-color: #e8f0fe;
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .option-btn.selected {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+            color: white;
+        }
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .next-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .next-btn:hover {
+            background-color: #1557b0;
+        }
+        .next-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+        .iq-score {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #1a73e8;
+            margin: 20px 0;
+        }
+        .iq-category {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 15px;
+        }
+        .restart-btn {
+            background-color: #34a853;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .restart-btn:hover {
+            background-color: #2d8540;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <!-- Konten Pertanyaan -->
+    <div id="quiz-box">
+        <h2 id="quiz-title">Tes IQ Logika & Matematika</h2>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="question" id="question-text">Memuat pertanyaan...</div>
+        <div class="options" id="options-container">
+            <!-- Pilihan jawaban akan muncul di sini via JS -->
+        </div>
+        <div class="controls">
+            <button class="next-btn" id="next-button" disabled onclick="nextQuestion()">Lanjut</button>
+        </div>
+    </div>
+
+    <!-- Konten Hasil -->
+    <div id="result-box" class="result-container">
+        <h2>Hasil Tes IQ Anda</h2>
+        <div class="iq-score" id="iq-score">0</div>
+        <div class="iq-category" id="iq-category">-</div>
+        <p id="iq-description">Deskripsi hasil tes.</p>
+        <button class="restart-btn" onclick="restartQuiz()">Ulangi Tes</button>
+    </div>
+</div>
+
+<script>
+    // Daftar Pertanyaan Tes IQ beserta Kunci Jawaban
+    const quizData = [
+        {
+            question: "1. Angka berapa yang melengkapi deret ini: 2, 4, 8, 16, ...?",
+            options: ["20", ["24"], "32", "64"],
+            correct: 2
+        },
+        {
+            question: "2. Jika semua Kucing suka ikan, dan Tom adalah seekor kucing, maka:",
+            options: ["Tom belum tentu suka ikan", "Tom suka ikan", "Tom tidak suka ikan", "Ikan suka Tom"],
+            correct: 1
+        },
+        {
+            question: "3. Mana yang tidak cocok dengan kelompoknya?",
+            options: ["Sepeda", "Mobil", "Kereta Api", "Pesawat Terbang"],
+            correct: 3
+        },
+        {
+            question: "4. Ibu Budi memiliki 5 anak: Lala, Lili, Lulu, Lele. Siapa nama anak kelima?",
+            options: ["Lolo", "Budi", "Lili", "Salah semua"],
+            correct: 1
+        },
+        {
+            question: "5. Pilihlah kata yang memiliki arti berlawanan dengan kata 'OPTIMIS':",
+            options: ["Realis", "Idealis", "Pesimis", "Skeptis"],
+            correct: 2
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedOptionIndex = null;
+
+    const quizBox = document.getElementById('quiz-box');
+    const resultBox = document.getElementById('result-box');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const nextButton = document.getElementById('next-button');
+    const progressBar = document.getElementById('progress');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizBox.style.display = 'block';
+        resultBox.style.display = 'none';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        resetState();
+        let currentQuestion = quizData[currentQuestionIndex];
+        questionText.innerText = currentQuestion.question;
+
+        // Update progress bar
+        const progressPercentage = (currentQuestionIndex / quizData.length) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+
+        // Tampilkan pilihan jawaban
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('option-btn');
+            button.addEventListener('click', () => selectOption(index, button));
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function resetState() {
+        nextButton.disabled = true;
+        selectedOptionIndex = null;
+        optionsContainer.innerHTML = '';
+    }
+
+    function selectOption(index, button) {
+        // Hapus kelas 'selected' dari semua tombol
+        const buttons = optionsContainer.getElementsByClassName('option-btn');
+        for (let btn of buttons) {
+            btn.classList.remove('selected');
+        }
+        // Tambahkan kelas 'selected' pada tombol yang diklik
+        button.classList.add('selected');
+        selectedOptionIndex = index;
+        nextButton.disabled = false;
+    }
+
+    function nextQuestion() {
+        // Cek jawaban
+        if (selectedOptionIndex === quizData[currentQuestionIndex].correct) {
+            score++;
+        }
+
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        quizBox.style.display = 'none';
+        resultBox.style.display = 'block';
+        progressBar.style.width = '100%';
+
+        // Rumus sederhana skor IQ buatan (Skor dasar 90 + poin per jawaban benar)
+        // Jika benar semua (5 soal): 90 + (5 * 8) = 130
+        let iqScore = 90 + (score * 8); 
+        
+        let category = "";
+        let description = "";
+
+        if (iqScore >= 120) {
+            category = "Sangat Cerdas (Superior)";
+            description = "Luar biasa! Anda memiliki kemampuan pemecahan masalah dan logika yang sangat tajam.";
+        } else if (iqScore >= 110) {
+            category = "Di Atas Rata-rata";
+            description = "Bagus sekali! Logika dan analisis berpikir Anda bekerja dengan sangat baik.";
+        } else if (iqScore >= 90) {
+            category = "Rata-rata (Normal)";
+            description = "Kemampuan kognitif Anda berada di tingkat normal dan bekerja dengan baik pada umumnya.";
+        } else {
+            category = "Di Bawah Rata-rata";
+            description = "Teruslah berlatih asah otak dan teka-teki logika untuk melatih ketajaman berpikir Anda.";
+        }
+
+        document.getElementById('iq-score').innerText = iqScore;
+        document.getElementById('iq-category').innerText = category;
+        document.getElementById('iq-description').innerText = description;
+    }
+
+    function restartQuiz() {
+        startQuiz();
+    }
+
+    // Jalankan aplikasi pertama kali
+    startQuiz();
+</script>
+
+</body>
+  </html>
+  
